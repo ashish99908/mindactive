@@ -14,63 +14,132 @@ exports.createPatient = (req, res) => {
     if (err) return res.status(500).json({ error: err.message });
     if (!caretaker) return res.status(404).json({ error: 'Caretaker profile not found' });
 
-    // Start transaction to create user + patient + link
-    db.serialize(() => {
-      db.run('BEGIN TRANSACTION');
+    const bcrypt = require('bcryptjs');
+    const salt = bcrypt.genSaltSync(10);
+    const passwordHash = bcrypt.hashSync(password, salt);
 
-      // Hash password
-      const bcrypt = require('bcryptjs');
-      const salt = bcrypt.genSaltSync(10);
-      const passwordHash = bcrypt.hashSync(password, salt);
+    // Use explicit transactions for both SQLite and Postgres
+    const beginTran = () => {
+      if (db.isPostgres) {
+        return new Promise((resolve, reject) => {
+          db.pg.query('BEGIN', (err) => {
+            if (err) reject(err); else resolve();
+          });
+        });
+      } else {
+        return new Promise((resolve) => {
+          db.run('BEGIN TRANSACTION', [], resolve);
+        });
+      }
+    };
 
-      // Insert user with role 'patient'
-      db.run(
-        `INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, 'patient')`,
-        [name, email, passwordHash],
-        function(err) {
-          if (err) {
-            db.run('ROLLBACK');
-            if (err.message.includes('UNIQUE')) {
-              return res.status(400).json({ error: 'Email already exists' });
+    const commitTran = () => {
+      if (db.isPostgres) {
+        return new Promise((resolve, reject) => {
+          db.pg.query('COMMIT', (err) => {
+            if (err) reject(err); else resolve();
+          });
+        });
+      } else {
+        return new Promise((resolve) => {
+          db.run('COMMIT', [], resolve);
+        });
+      }
+    };
+
+    const rollbackTran = () => {
+      if (db.isPostgres) {
+        return new Promise((resolve) => {
+          db.pg.query('ROLLBACK', (err) => {
+            if (err) console.error(e); else resolve();
+          });
+        });
+      } else {
+        return new Promise((resolve) => {
+          db.run('ROLLBACK', [], resolve);
+        });
+      }
+    };
+
+    (async () => {
+      try {
+        await beginTran();
+        
+        let userId;
+        await new Promise((resolve, reject) => {
+          db.run(
+            `INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, 'patient')`,
+            [name, email, passwordHash],
+            (err, result) => {
+              if (err) {
+                rollbackTran().then(() => reject(err));
+                return;
+              }
+              if (db.isPostgres) {
+                db.get(`SELECT LASTVAL() as id`, [], (err2, row) => {
+                  userId = row ? row.id : null;
+                  resolve();
+                });
+              } else {
+                userId = result.lastID;
+                resolve();
+              }
             }
-            return res.status(500).json({ error: err.message });
-          }
-          const userId = this.lastID;
+          );
+        });
 
-          // Insert patient record
+        let patientId;
+        await new Promise((resolve, reject) => {
           db.run(
             `INSERT INTO patients (user_id, age, gender, preferred_language, emergency_contact, notes)
              VALUES (?, ?, ?, ?, ?, ?)`,
             [userId, age, gender, preferredLanguage, emergencyContact, notes],
-            function(err2) {
-              if (err2) {
-                db.run('ROLLBACK');
-                return res.status(500).json({ error: err2.message });
+            (err, result) => {
+              if (err) {
+                rollbackTran().then(() => reject(err));
+                return;
               }
-              const patientId = this.lastID;
-
-              // Link patient to caretaker
-              db.run(
-                `INSERT INTO patient_caretakers (patient_id, caretaker_id) VALUES (?, ?)`,
-                [patientId, caretaker.id],
-                function(err3) {
-                  if (err3) {
-                    db.run('ROLLBACK');
-                    return res.status(500).json({ error: err3.message });
-                  }
-                  db.run('COMMIT');
-                  res.status(201).json({
-                    message: 'Patient created and linked to caretaker',
-                    patientId: patientId,
-                    userId: userId
-                  });
-                }
-              );
+              if (db.isPostgres) {
+                db.get(`SELECT LASTVAL() as id`, [], (err2, row) => {
+                  patientId = row ? row.id : null;
+                  resolve();
+                });
+              } else {
+                patientId = result.lastID;
+                resolve();
+              }
             }
           );
+        });
+
+        await new Promise((resolve, reject) => {
+          db.run(
+            `INSERT INTO patient_caretakers (patient_id, caretaker_id) VALUES (?, ?)`,
+            [patientId, caretaker.id],
+            (err) => {
+              if (err) {
+                rollbackTran().then(() => reject(err));
+                return;
+              }
+              resolve();
+            }
+          );
+        });
+
+        await commitTran();
+        res.status(201).json({
+          message: 'Patient created and linked to caretaker',
+          patientId: patientId,
+          userId: userId
+        });
+      } catch (err) {
+        try { await rollbackTran(); } catch (e) {}
+        if (err.message && err.message.includes('UNIQUE')) {
+          return res.status(400).json({ error: 'Email already exists' });
         }
-      );
-    });
+        return res.status(500).json({ error: err.message });
+      }
+    })();
   });
 };
 exports.getAllPatients = (req, res) => {
@@ -104,7 +173,7 @@ exports.getPatientById = (req, res) => {
   });
 };
 
-// ---- Medical reports (PDF / image, stored in SQLite) ----
+// ---- Medical reports (PDF / image, stored in DB) ----
 
 exports.uploadReport = (req, res) => {
   const patientId = req.params.id;
@@ -117,9 +186,10 @@ exports.uploadReport = (req, res) => {
     db.run(
       `INSERT INTO medical_reports (patient_id, file_name, mime_type, size, data) VALUES (?,?,?,?,?)`,
       [patientId, req.file.originalname, req.file.mimetype, req.file.size, req.file.buffer],
-      function (err2) {
+      (err2, result) => {
         if (err2) return res.status(500).json({ error: err2.message });
-        res.status(201).json({ message: 'Report uploaded', reportId: this.lastID, fileName: req.file.originalname, size: req.file.size });
+        const reportId = db.isPostgres ? (result.rows && result.rows[0] ? result.rows[0].id : null) : result.lastID;
+        res.status(201).json({ message: 'Report uploaded', reportId: reportId || result.lastID, fileName: req.file.originalname, size: req.file.size });
       }
     );
   });

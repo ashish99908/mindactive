@@ -18,5 +18,25 @@ const games = [
   { name: 'Melody Tap', description: 'Listen to a short melody and tap it back', cognitive_area: 'Auditory Memory, Sequencing' },
   { name: 'Calm Waves', description: 'Follow a gentle guided breathing exercise to relax', cognitive_area: 'Relaxation, Mindfulness' }
 ];
-games.forEach(g => db.run(`INSERT OR IGNORE INTO games (name, description, cognitive_area) VALUES (?,?,?)`, [g.name, g.description, g.cognitive_area]));
-console.log('Seed completed.');
+
+const seedGames = () => {
+  if (db.isPostgres) {
+    // PostgreSQL: use INSERT ... ON CONFLICT DO NOTHING
+    const query = `
+      INSERT INTO games (name, description, cognitive_area)
+      VALUES ${games.map((g, i) => `($${i*3+1}, $${i*3+2}, $${i*3+3})`).join(', ')}
+      ON CONFLICT (name) DO NOTHING
+    `;
+    const values = games.flatMap(g => [g.name, g.description, g.cognitive_area]);
+    db.pg.query(query, values, (err) => {
+      if (err) console.error('Seed error:', err.message);
+      else console.log('Seed completed (PostgreSQL).');
+    });
+  } else {
+    // SQLite
+    games.forEach(g => db.run(`INSERT OR IGNORE INTO games (name, description, cognitive_area) VALUES (?,?,?)`, [g.name, g.description, g.cognitive_area]));
+    console.log('Seed completed (SQLite).');
+  }
+};
+
+seedGames();

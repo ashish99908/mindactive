@@ -32,9 +32,10 @@ exports.saveResult = (req, res) => {
       INSERT INTO game_results
       (patient_id, game_id, level, score, accuracy, correct_answers, wrong_answers, attempts, completion_time, average_reaction_time, hints_used, audio_used)
       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
-    `, [patientId, gameId, level, score || 0, accuracy || 0, correctAnswers || 0, wrongAnswers || 0, attempts || 0, completionTime || 0, reactionTime || 0, hintsUsed || 0, audioUsed ? 1 : 0], function(err2) {
+    `, [patientId, gameId, level, score || 0, accuracy || 0, correctAnswers || 0, wrongAnswers || 0, attempts || 0, completionTime || 0, reactionTime || 0, hintsUsed || 0, audioUsed ? 1 : 0], (err2, result) => {
       if (err2) return res.status(500).json({ error: err2.message });
-      res.status(201).json({ id: this.lastID, patientId });
+      const id = db.isPostgres ? (result.lastID || result.rows ? result.rows[0]?.id : null) : result.lastID;
+      res.status(201).json({ id: id || result.lastID, patientId });
     });
   });
 };

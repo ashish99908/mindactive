@@ -1,12 +1,12 @@
 services:
-  # ---------- Backend API (Express + SQLite) ----------
+  # ---------- Backend API (Express + PostgreSQL via Neon free tier) ----------
   - type: web
     name: smritiloom-api
     runtime: node
-    plan: starter          # free tier cannot attach persistent disks; SQLite needs one
+    plan: free            # free tier - data stored in Neon PostgreSQL, not local disk
     rootDir: backend
-    buildCommand: npm install && npm run seed
-    startCommand: npm start
+    buildCommand: npm install
+    startCommand: node server.js
     healthCheckPath: /api/health
     envVars:
       - key: JWT_SECRET
@@ -15,14 +15,10 @@ services:
         sync: false        # set manually in the Render dashboard (secret)
       - key: FRONTEND_URL
         sync: false        # set after the frontend service exists, e.g. https://smritiloom.onrender.com
-      - key: DB_PATH
-        value: /var/data/cognitive_gaming.db
+      - key: DATABASE_URL
+        sync: false        # set to your Neon PostgreSQL connection string
       - key: NODE_VERSION
         value: "20"
-    disk:
-      name: smritiloom-data
-      mountPath: /var/data
-      sizeGB: 1
 
   # ---------- Frontend (static React build served by Render) ----------
   - type: web
