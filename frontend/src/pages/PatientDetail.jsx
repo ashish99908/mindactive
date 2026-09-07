@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api.js';
+import { useLang } from '../i18n/LanguageContext.jsx';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   BarChart, Bar, Cell,
@@ -11,6 +12,7 @@ const CHART_COLORS = ['#6d5ef2', '#14b8a6', '#f59e0b', '#ec4899', '#3b82f6', '#2
 const PatientDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { t } = useLang();
 
   const [patient, setPatient] = useState(null);
   const [results, setResults] = useState([]);
@@ -34,20 +36,20 @@ const PatientDetail = () => {
       window.open(url, '_blank');
       setTimeout(() => URL.revokeObjectURL(url), 60000);
     } catch (err) {
-      alert('Could not open report: ' + (err.response?.data?.error || err.message));
+      alert(t('Could not open report:') + ' ' + (err.response?.data?.error || err.message));
     }
   };
 
   const uploadReport = async (file) => {
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { alert('File too large — maximum size is 5 MB'); return; }
+    if (file.size > 5 * 1024 * 1024) { alert(t('File too large — maximum size is 5 MB')); return; }
     const fd = new FormData();
     fd.append('report', file);
     try {
       await api.post(`/patients/${id}/report`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
       fetchReport();
     } catch (err) {
-      alert('Upload failed: ' + (err.response?.data?.error || err.message));
+      alert(t('Upload failed:') + ' ' + (err.response?.data?.error || err.message));
     }
   };
 
@@ -64,7 +66,7 @@ const PatientDetail = () => {
         setResults(resultsRes.data || []);
       } catch (err) {
         console.error(err);
-        setError('Failed to load patient data');
+        setError(t('Failed to load patient data'));
       } finally {
         setLoading(false);
       }
@@ -95,14 +97,14 @@ const PatientDetail = () => {
   if (error) {
     return (
       <div className="container page-pad">
-        <div className="empty-state"><div className="empty-icon">⚠️</div><h3>Something went wrong</h3><p>{error}</p></div>
+        <div className="empty-state"><div className="empty-icon">⚠️</div><h3>{t('Something went wrong')}</h3><p>{error}</p></div>
       </div>
     );
   }
   if (!patient) {
     return (
       <div className="container page-pad">
-        <div className="empty-state"><div className="empty-icon">🤷</div><h3>Patient not found</h3></div>
+        <div className="empty-state"><div className="empty-icon">🤷</div><h3>{t('Patient not found')}</h3></div>
       </div>
     );
   }
@@ -145,22 +147,22 @@ const PatientDetail = () => {
   }));
 
   const statTiles = [
-    { icon: '🎮', label: 'Games Played', value: totalGames, tint: 'tint-purple' },
-    { icon: '📊', label: 'Avg Accuracy', value: `${Math.round(avgAccuracy)}%`, tint: 'tint-teal' },
-    { icon: '🏆', label: 'Best Score', value: bestScore, tint: 'tint-amber' },
-    { icon: '📈', label: 'Latest Level', value: latestLevel, tint: 'tint-pink' },
+    { icon: '🎮', label: t('Games Played'), value: totalGames, tint: 'tint-purple' },
+    { icon: '📊', label: t('Avg Accuracy'), value: `${Math.round(avgAccuracy)}%`, tint: 'tint-teal' },
+    { icon: '🏆', label: t('Best Score'), value: bestScore, tint: 'tint-amber' },
+    { icon: '📈', label: t('Latest Level'), value: latestLevel, tint: 'tint-pink' },
   ];
 
   return (
-    <div className="container page-pad">
+    <div className="container page-pad patient-detail-page">
       <button className="ghost small fade-up" onClick={() => navigate(-1)} style={{ marginBottom: 14 }}>
-        ← Back
+        {t('← Back')}
       </button>
 
       {/* Profile banner */}
-      <div className="card fade-up" style={{ padding: 0, overflow: 'hidden' }}>
-        <div style={{ background: 'var(--grad-brand)', padding: '34px 28px 58px', position: 'relative' }}>
-          <div className="avatar-gradient" style={{
+      <div className="card fade-up patient-summary-card" style={{ padding: 0, overflow: 'hidden' }}>
+        <div className="patient-summary-hero" style={{ background: 'var(--grad-brand)', padding: '34px 28px 58px', position: 'relative' }}>
+          <div className="avatar-gradient patient-summary-avatar" style={{
             width: 92, height: 92, fontSize: '2.4rem',
             border: '4px solid rgba(255,255,255,0.7)',
             marginLeft: 28, transform: 'translateY(38px)',
@@ -170,13 +172,13 @@ const PatientDetail = () => {
             {patient.name?.charAt(0) || 'P'}
           </div>
         </div>
-        <div style={{ padding: '14px 28px 26px' }}>
+        <div className="patient-summary-content" style={{ padding: '14px 28px 26px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, alignItems: 'flex-start' }}>
             <div>
-              <h2 style={{ fontSize: '1.6rem', fontFamily: 'var(--font-display)' }}>{patient.name}</h2>
+              <h2 className="patient-summary-name" style={{ fontSize: '1.6rem', fontFamily: 'var(--font-display)' }}>{patient.name}</h2>
               <p className="text-muted" style={{ marginBottom: 12 }}>📧 {patient.email}</p>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {patient.age && <span className="badge badge-purple">🎂 {patient.age} years</span>}
+                {patient.age && <span className="badge badge-purple">🎂 {patient.age} {t('years')}</span>}
                 {patient.gender && <span className="badge badge-blue">⚥ {patient.gender}</span>}
                 {patient.preferred_language && <span className="badge badge-amber">🗣️ {patient.preferred_language}</span>}
                 {patient.emergency_contact && <span className="badge badge-red">📞 {patient.emergency_contact}</span>}
@@ -193,25 +195,25 @@ const PatientDetail = () => {
 
       {/* Medical report */}
       <div className="card fade-up-1" style={{ marginBottom: 24 }}>
-        <div className="card-title">📋 Medical report</div>
+        <div className="card-title">📋 {t('Medical report')}</div>
         {reportLoading ? (
           <div className="skeleton" style={{ height: 60 }} />
         ) : report ? (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <div className="patient-report-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
             <div>
               <div style={{ fontWeight: 700 }}>📄 {report.file_name}</div>
               <div style={{ fontSize: '.85rem', color: 'var(--c-muted)' }}>
-                {Math.max(1, Math.round((report.size || 0) / 1024))} KB · uploaded {new Date(report.created_at).toLocaleDateString()}
+                {Math.max(1, Math.round((report.size || 0) / 1024))} KB · {t('uploaded')} {new Date(report.created_at).toLocaleDateString()}
               </div>
             </div>
-            <button className="secondary small" onClick={viewReport}>👁 View report</button>
+            <button className="secondary small" onClick={viewReport}>👁 {t('View report')}</button>
           </div>
         ) : (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-            <span className="text-muted">No medical report uploaded yet.</span>
+          <div className="patient-report-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <span className="text-muted">{t('No medical report uploaded yet.')}</span>
             <label className="file-drop" style={{ padding: '10px 16px', marginBottom: 0 }}>
               <input type="file" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg" style={{ display: 'none' }} onChange={(e) => uploadReport(e.target.files?.[0])} />
-              <span>📎 Upload report (PDF/JPG/PNG, max 5 MB)</span>
+              <span>📎 {t('Upload report (PDF/JPG/PNG, max 5 MB)')}</span>
             </label>
           </div>
         )}
@@ -234,7 +236,7 @@ const PatientDetail = () => {
       <div className="grid-2 fade-up-2">
         {scoreOverTime.length > 1 && (
           <div className="card" style={{ marginBottom: 0 }}>
-            <div className="card-title">📉 Score & accuracy over time</div>
+            <div className="card-title">📉 {t('Score & accuracy over time')}</div>
             <ResponsiveContainer width="100%" height={280}>
               <LineChart data={scoreOverTime} margin={{ top: 5, right: 10, left: -18, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--c-line)" />
@@ -242,8 +244,8 @@ const PatientDetail = () => {
                 <YAxis tick={{ fontSize: 12, fill: 'var(--c-muted)' }} />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="score" stroke={CHART_COLORS[0]} strokeWidth={3} dot={{ r: 4 }} name="Score" />
-                <Line type="monotone" dataKey="accuracy" stroke={CHART_COLORS[1]} strokeWidth={3} dot={{ r: 4 }} name="Accuracy %" />
+                <Line type="monotone" dataKey="score" stroke={CHART_COLORS[0]} strokeWidth={3} dot={{ r: 4 }} name={t('Score')} />
+                <Line type="monotone" dataKey="accuracy" stroke={CHART_COLORS[1]} strokeWidth={3} dot={{ r: 4 }} name={t('Accuracy %')} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -251,14 +253,14 @@ const PatientDetail = () => {
 
         {accuracyPerGame.length > 0 && (
           <div className="card" style={{ marginBottom: 0 }}>
-            <div className="card-title">🎯 Accuracy by game</div>
+            <div className="card-title">🎯 {t('Accuracy by game')}</div>
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={accuracyPerGame} margin={{ top: 5, right: 10, left: -18, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--c-line)" />
                 <XAxis dataKey="game" tick={{ fontSize: 11, fill: 'var(--c-muted)' }} interval={0} />
                 <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: 'var(--c-muted)' }} />
                 <Tooltip />
-                <Bar dataKey="avgAccuracy" name="Avg accuracy %" radius={[8, 8, 0, 0]}>
+                <Bar dataKey="avgAccuracy" name={t('Avg accuracy %')} radius={[8, 8, 0, 0]}>
                   {accuracyPerGame.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
                 </Bar>
               </BarChart>
@@ -268,14 +270,14 @@ const PatientDetail = () => {
 
         {avgLevelPerGame.length > 0 && (
           <div className="card" style={{ marginBottom: 0, gridColumn: '1 / -1' }}>
-            <div className="card-title">🪜 Average level per game</div>
+            <div className="card-title">🪜 {t('Average level per game')}</div>
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={avgLevelPerGame} margin={{ top: 5, right: 10, left: -18, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--c-line)" />
                 <XAxis dataKey="game" tick={{ fontSize: 11, fill: 'var(--c-muted)' }} interval={0} />
                 <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: 'var(--c-muted)' }} />
                 <Tooltip />
-                <Bar dataKey="avgLevel" name="Avg level" radius={[8, 8, 0, 0]}>
+                <Bar dataKey="avgLevel" name={t('Avg level')} radius={[8, 8, 0, 0]}>
                   {avgLevelPerGame.map((_, i) => <Cell key={i} fill={CHART_COLORS[(i + 2) % CHART_COLORS.length]} />)}
                 </Bar>
               </BarChart>
@@ -286,19 +288,19 @@ const PatientDetail = () => {
 
       {/* Results table */}
       <div className="card fade-up-3" style={{ marginTop: 22 }}>
-        <div className="card-title">🗒️ Recent game results</div>
+        <div className="card-title">🗒️ {t('Recent game results')}</div>
         {results.length === 0 ? (
           <div className="empty-state" style={{ padding: 40 }}>
             <div className="empty-icon">🌱</div>
-            <h3>No game results yet</h3>
-            <p>Results will appear here after {patient.name?.split(' ')[0]} plays some games.</p>
+            <h3>{t('No game results yet')}</h3>
+            <p>{t('Results will appear here after {name} plays some games.', { name: patient.name?.split(' ')[0] })}</p>
           </div>
         ) : (
           <div className="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>Game</th><th>Level</th><th>Score</th><th>Accuracy</th><th>Date</th>
+                  <th>{t('Game')}</th><th>{t('Level')}</th><th>{t('Score')}</th><th>{t('Accuracy')}</th><th>{t('Date')}</th>
                 </tr>
               </thead>
               <tbody>

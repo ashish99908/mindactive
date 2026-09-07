@@ -1,0 +1,31 @@
+/* Language switcher */
+.lang-switch { position: relative; display: inline-block; }
+.lang-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 14px; border-radius: 999px;
+  border: 1.5px solid rgba(109, 94, 242, 0.35);
+  background: #fff; color: var(--c-body, #374151);
+  cursor: pointer; font-weight: 600; font-size: 0.9rem;
+}
+.lang-btn:hover { border-color: #6d5ef2; }
+.lang-caret { font-size: 0.7rem; opacity: 0.7; }
+.lang-menu {
+  position: absolute; right: 0; top: calc(100% + 8px);
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 14px;
+  box-shadow: 0 12px 30px rgba(20, 20, 43, 0.14);
+  padding: 6px; min-width: 190px; z-index: 1000;
+}
+.lang-item {
+  display: flex; width: 100%; align-items: center; justify-content: space-between;
+  gap: 10px; padding: 9px 12px; border: none; background: transparent;
+  border-radius: 9px; cursor: pointer; font-size: 0.95rem; font-weight: 600;
+  color: inherit; text-align: left;
+}
+.lang-item:hover { background: #f3f1ff; }
+.lang-item.active { background: #efecff; color: #5b4bd4; }
+.lang-code { font-size: 0.72rem; color: #9ca3af; font-weight: 700; }
+
+/* Script fonts once html[lang] changes (set by LanguageProvider) */
+:lang(as) * { font-family: 'Noto Sans Bengali', 'Nirmala UI', 'Noto Sans', sans-serif; }
+:lang(brx) * { font-family: 'Noto Sans Devanagari', 'Nirmala UI', 'Noto Sans', sans-serif; }
+:lang(mni) * { font-family: 'Noto Sans Meetei Mayek', 'Nirmala UI', 'Noto Sans', sans-serif; }

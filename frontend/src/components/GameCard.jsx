@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useLang } from '../i18n/LanguageContext.jsx';
 
 const gameMeta = {
   'Bazaar Buddy': { icon: '🛒', tint: 'tint-teal', grad: 'linear-gradient(135deg, #14b8a6 0%, #0ea5e9 100%)' },
@@ -22,10 +23,11 @@ const gameMeta = {
 };
 
 const GameCard = ({ game }) => {
+  const { t } = useLang();
   const meta = gameMeta[game.name] || { icon: '🧩', tint: 'tint-purple', grad: 'linear-gradient(135deg, #6d5ef2 0%, #9f5ef2 100%)' };
   return (
-    <div className="card hoverable" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-      <div style={{
+    <div className="card hoverable game-card" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <div className="game-card-banner" style={{
         background: meta.grad,
         padding: '30px 24px 22px',
         display: 'flex',
@@ -34,24 +36,24 @@ const GameCard = ({ game }) => {
         gap: 6,
         position: 'relative',
       }}>
-        <div style={{
+        <div className="game-card-icon" style={{
           width: 84, height: 84, borderRadius: '50%',
           background: 'rgba(255,255,255,0.22)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: '2.6rem',
           backdropFilter: 'blur(4px)',
         }}>{meta.icon}</div>
-        <h3 style={{ color: '#fff', fontSize: '1.3rem', fontWeight: 700, textAlign: 'center' }}>{game.name}</h3>
+        <h3 className="game-card-title" style={{ color: '#fff', fontSize: '1.3rem', fontWeight: 700, textAlign: 'center' }}>{game.name}</h3>
       </div>
-      <div style={{ padding: '20px 22px 22px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+      <div className="game-card-body" style={{ padding: '20px 22px 22px', display: 'flex', flexDirection: 'column', flex: 1 }}>
         <p style={{ fontSize: '.95rem', color: 'var(--c-body)', flex: 1 }}>{game.description}</p>
         <div style={{ margin: '14px 0 16px' }}>
           <span className={`badge ${game.cognitive_area ? 'badge-purple' : 'badge-gray'}`}>
-            🧠 {game.cognitive_area || 'Cognitive training'}
+            🧠 {game.cognitive_area || t('Cognitive training')}
           </span>
         </div>
         <Link to={`/patient/game/${game.id}`} style={{ marginTop: 'auto' }}>
-          <button style={{ width: '100%' }}>▶ Play now</button>
+          <button style={{ width: '100%' }}>▶ {t('Play now')}</button>
         </Link>
       </div>
     </div>

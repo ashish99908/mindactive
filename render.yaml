@@ -1,0 +1,40 @@
+services:
+  # ---------- Backend API (Express + SQLite) ----------
+  - type: web
+    name: smritiloom-api
+    runtime: node
+    plan: starter          # free tier cannot attach persistent disks; SQLite needs one
+    rootDir: backend
+    buildCommand: npm install && npm run seed
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: GROQ_API_KEY
+        sync: false        # set manually in the Render dashboard (secret)
+      - key: FRONTEND_URL
+        sync: false        # set after the frontend service exists, e.g. https://smritiloom.onrender.com
+      - key: DB_PATH
+        value: /var/data/cognitive_gaming.db
+      - key: NODE_VERSION
+        value: "20"
+    disk:
+      name: smritiloom-data
+      mountPath: /var/data
+      sizeGB: 1
+
+  # ---------- Frontend (static React build served by Render) ----------
+  - type: web
+    name: smritiloom-web
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        sync: false        # set after the backend service exists, e.g. https://smritiloom-api.onrender.com/api
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html   # SPA client-side routing

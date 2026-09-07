@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.jsx';
+import { useLang } from '../i18n/LanguageContext.jsx';
 import api from '../services/api.js';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -11,6 +12,7 @@ const CHART_COLORS = ['#6d5ef2', '#14b8a6', '#f59e0b', '#ec4899', '#3b82f6', '#2
 
 export default function Progress() {
   const { user } = useAuth();
+  const { t } = useLang();
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -59,25 +61,25 @@ export default function Progress() {
   }));
 
   const statTiles = [
-    { icon: '🎮', label: 'Sessions', value: totalGames, tint: 'tint-purple' },
-    { icon: '🎯', label: 'Avg Accuracy', value: `${Math.round(avgAccuracy)}%`, tint: 'tint-teal' },
-    { icon: '🏆', label: 'Best Score', value: bestScore, tint: 'tint-amber' },
-    { icon: '⭐', label: 'Total Score', value: totalScore, tint: 'tint-pink' },
+    { icon: '🎮', label: t('Sessions'), value: totalGames, tint: 'tint-purple' },
+    { icon: '🎯', label: t('Avg Accuracy'), value: `${Math.round(avgAccuracy)}%`, tint: 'tint-teal' },
+    { icon: '🏆', label: t('Best Score'), value: bestScore, tint: 'tint-amber' },
+    { icon: '⭐', label: t('Total Score'), value: totalScore, tint: 'tint-pink' },
   ];
 
   return (
-    <div className="container page-pad">
+    <div className="container page-pad progress-page">
       <div className="fade-up" style={{ marginBottom: 26 }}>
-        <h1 className="page-title">📈 My Progress</h1>
-        <p className="page-subtitle">See how your brain is getting stronger, session by session.</p>
+        <h1 className="page-title">📈 {t('My Progress')}</h1>
+        <p className="page-subtitle">{t('See how your brain is getting stronger, session by session.')}</p>
       </div>
 
       {totalGames === 0 ? (
         <div className="empty-state fade-up-1">
           <div className="empty-icon">🌱</div>
-          <h3>No results yet</h3>
-          <p>Play your first game to start growing your progress tree!</p>
-          <Link to="/patient/games"><button style={{ marginTop: 18 }}>🎮 Browse games</button></Link>
+          <h3>{t('No results yet')}</h3>
+          <p>{t('Play your first game to start growing your progress tree!')}</p>
+          <Link to="/patient/games"><button style={{ marginTop: 18 }}>🎮 {t('Browse games')}</button></Link>
         </div>
       ) : (
         <>
@@ -96,7 +98,7 @@ export default function Progress() {
           <div className="grid-2 fade-up-2">
             {scoreOverTime.length > 1 && (
               <div className="card" style={{ marginBottom: 0 }}>
-                <div className="card-title">📉 Score & accuracy over time</div>
+                <div className="card-title">📉 {t('Score & accuracy over time')}</div>
                 <ResponsiveContainer width="100%" height={280}>
                   <LineChart data={scoreOverTime} margin={{ top: 5, right: 10, left: -18, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--c-line)" />
@@ -104,8 +106,8 @@ export default function Progress() {
                     <YAxis tick={{ fontSize: 12, fill: 'var(--c-muted)' }} />
                     <Tooltip />
                     <Legend />
-                    <Line type="monotone" dataKey="score" stroke={CHART_COLORS[0]} strokeWidth={3} dot={{ r: 4 }} name="Score" />
-                    <Line type="monotone" dataKey="accuracy" stroke={CHART_COLORS[1]} strokeWidth={3} dot={{ r: 4 }} name="Accuracy %" />
+                    <Line type="monotone" dataKey="score" stroke={CHART_COLORS[0]} strokeWidth={3} dot={{ r: 4 }} name={t('Score')} />
+                    <Line type="monotone" dataKey="accuracy" stroke={CHART_COLORS[1]} strokeWidth={3} dot={{ r: 4 }} name={t('Accuracy %')} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -113,14 +115,14 @@ export default function Progress() {
 
             {accuracyPerGame.length > 0 && (
               <div className="card" style={{ marginBottom: 0 }}>
-                <div className="card-title">🎯 Accuracy by game</div>
+                <div className="card-title">🎯 {t('Accuracy by game')}</div>
                 <ResponsiveContainer width="100%" height={280}>
                   <BarChart data={accuracyPerGame} margin={{ top: 5, right: 10, left: -18, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--c-line)" />
                     <XAxis dataKey="game" tick={{ fontSize: 11, fill: 'var(--c-muted)' }} interval={0} />
                     <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: 'var(--c-muted)' }} />
                     <Tooltip />
-                    <Bar dataKey="avgAccuracy" name="Avg accuracy %" radius={[8, 8, 0, 0]}>
+                    <Bar dataKey="avgAccuracy" name={t('Avg accuracy %')} radius={[8, 8, 0, 0]}>
                       {accuracyPerGame.map((_, i) => (
                         <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
                       ))}
@@ -132,12 +134,12 @@ export default function Progress() {
           </div>
 
           <div className="card fade-up-3" style={{ marginTop: 22 }}>
-            <div className="card-title">🗒️ Recent sessions</div>
+            <div className="card-title">🗒️ {t('Recent sessions')}</div>
             <div className="table-wrap">
               <table>
                 <thead>
                   <tr>
-                    <th>Game</th><th>Level</th><th>Score</th><th>Accuracy</th><th>Date</th>
+                    <th>{t('Game')}</th><th>{t('Level')}</th><th>{t('Score')}</th><th>{t('Accuracy')}</th><th>{t('Date')}</th>
                   </tr>
                 </thead>
                 <tbody>

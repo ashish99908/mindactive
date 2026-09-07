@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api.js';
+import { useLang } from '../i18n/LanguageContext.jsx';
 import BazaarBuddy from '../games/BazaarBuddy/BazaarBuddy.jsx';
 import SpotTheChange from '../games/SpotTheChange/index.jsx';
 import WordGarden from '../games/WordGarden/index.jsx';
@@ -63,6 +64,7 @@ const gameMeta = {
 export default function GamePlay() {
   const { gameId } = useParams();
   const navigate = useNavigate();
+  const { t } = useLang();
   const [game, setGame] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -77,7 +79,7 @@ export default function GamePlay() {
       <div className="container page-pad">
         <div className="loading-wrap">
           <div className="spinner" />
-          Loading game…
+          {t('Loading game…')}
         </div>
       </div>
     );
@@ -88,8 +90,8 @@ export default function GamePlay() {
       <div className="container page-pad">
         <div className="empty-state">
           <div className="empty-icon">🤔</div>
-          <h3>Game not found</h3>
-          <p>This game may have been removed.</p>
+          <h3>{t('Game not found')}</h3>
+          <p>{t('This game may have been removed.')}</p>
         </div>
       </div>
     );
@@ -103,27 +105,27 @@ export default function GamePlay() {
       <div className="container page-pad">
         <div className="empty-state">
           <div className="empty-icon">🚧</div>
-          <h3>Coming soon</h3>
-          <p>“{game.name}” is being polished and will be playable soon.</p>
-          <button className="secondary" style={{ marginTop: 16 }} onClick={() => navigate('/patient/games')}>← Back to games</button>
+          <h3>{t('Coming soon')}</h3>
+          <p>“{game.name}” {t('is being polished and will be playable soon.')}</p>
+          <button className="secondary" style={{ marginTop: 16 }} onClick={() => navigate('/patient/games')}>{t('← Back to games')}</button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container page-pad">
+    <div className="container page-pad gameplay-page">
       <div className="gameplay-header fade-up">
-        <button className="ghost small" onClick={() => navigate('/patient/games')}>← Exit game</button>
+        <button className="ghost small" onClick={() => navigate('/patient/games')}>{t('← Exit game')}</button>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div className={`stat-icon ${meta.tint}`} style={{ width: 52, height: 52, fontSize: '1.6rem' }}>{meta.icon}</div>
+          <div className={`stat-icon ${meta.tint} gameplay-icon`} style={{ width: 52, height: 52, fontSize: '1.6rem' }}>{meta.icon}</div>
           <div>
-            <h1 className="page-title" style={{ fontSize: '1.6rem' }}>{game.name}</h1>
+            <h1 className="page-title gameplay-title" style={{ fontSize: '1.6rem' }}>{game.name}</h1>
             {game.cognitive_area && <span className="badge badge-purple">🧠 {game.cognitive_area}</span>}
           </div>
         </div>
       </div>
-      <div className="card fade-up-1" style={{ padding: 22 }}>
+      <div className="card fade-up-1 gameplay-surface" style={{ padding: 22 }}>
         <Comp gameId={game.id} />
       </div>
     </div>
